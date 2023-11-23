@@ -1,0 +1,28 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<ReferenceGroup ID="09c2013e-93e3-4539-a507-f7f2b4118253" xmlns="urn:schemas-microsoft-com:xml-wcfservicemap">
+    <ClientOptions>
+        <GenerateAsynchronousMethods>false</GenerateAsynchronousMethods>
+        <GenerateTaskBasedAsynchronousMethod>true</GenerateTaskBasedAsynchronousMethod>
+        <EnableDataBinding>true</EnableDataBinding>
+        <ExcludedTypes/>
+        <ImportXmlTypes>false</ImportXmlTypes>
+        <GenerateInternalTypes>false</GenerateInternalTypes>
+        <GenerateMessageContracts>false</GenerateMessageContracts>
+        <NamespaceMappings>
+            <NamespaceMapping TargetNamespace="LetsGoBikingServer.JCDService" ClrNamespace="*"/>
+        </NamespaceMappings>
+        <CollectionMappings/>
+        <GenerateSerializableTypes>true</GenerateSerializableTypes>
+        <Serializer>Auto</Serializer>
+        <UseSerializerForFaults>true</UseSerializerForFaults>
+        <ReferenceAllAssemblies>true</ReferenceAllAssemblies>
+        <ReferencedAssemblies/>
+        <ReferencedDataContractTypes/>
+        <ServiceContractMappings/>
+    </ClientOptions>
+    <MetadataSources>
+        <MetadataSource Address="http://localhost:8001/ProxyServer" Protocol="http" SourceId="1"/>
+    </MetadataSources>
+    <Metadata/>
+    <Extensions/>
+</ReferenceGroup>

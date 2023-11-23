@@ -1,0 +1,220 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Device.Location;
+using System.Globalization;
+using System.Linq;
+using System.Net.Http;
+using System.ServiceModel;
+using System.Text;
+using System.Threading.Tasks;
+using LetsGoBikingServer.JCDService;
+using Newtonsoft.Json.Linq;
+
+namespace LetsGoBikingServer
+{
+    [ServiceBehavior(InstanceContextMode = InstanceContextMode.Single, IncludeExceptionDetailInFaults = true)]
+    public class RoutingService : IRoutingService
+    {
+        private const int MESSAGE_LIMIT = 25;
+        private static int _BACKUP_API_KEY_INDEX = 0;
+        private static readonly Dictionary<string, Dictionary<ActiveMQProducer, List<Itinerary>>> _itineraries =
+            new Dictionary<string, Dictionary<ActiveMQProducer, List<Itinerary>>>();
+
+        private static readonly JCDServiceClient jcdServiceClient = new JCDServiceClient();
+        private readonly HttpClient _client;
+        private readonly NominatimUtils _nominatimUtils;
+
+        public RoutingService()
+        {
+            _client = new HttpClient();
+            _nominatimUtils = new NominatimUtils(_client);
+        }
+
+        public async Task<List<Itinerary>> GetItineraries(string origin, string destination)
+        {
+            var originCoordinates = await _nominatimUtils.GetGeoCodeAsync(origin);
+            var destinationCoordinates = await _nominatimUtils.GetGeoCodeAsync(destination);
+
+            var originCoordinatesGeoSimplified = new SimplifiedGeoCoordinate();
+            originCoordinatesGeoSimplified.latitude = originCoordinates.Latitude;
+            originCoordinatesGeoSimplified.longitude = originCoordinates.Longitude;
+            var destinationCoordinatesGeoSimplfied = new SimplifiedGeoCoordinate();
+            destinationCoordinatesGeoSimplfied.latitude = destinationCoordinates.Latitude;
+            destinationCoordinatesGeoSimplfied.longitude = destinationCoordinates.Longitude;
+
+            var originCity = await _nominatimUtils.GetCityFromCoordinatesAsync(originCoordinates);
+            var destinationCity = await _nominatimUtils.GetCityFromCoordinatesAsync(destinationCoordinates);
+            var originStation =
+                await jcdServiceClient.GetClosestStationAsync(originCoordinatesGeoSimplified, originCity);
+            var destinationStation =
+                await jcdServiceClient.GetClosestStationAsync(destinationCoordinatesGeoSimplfied, destinationCity);
+            var originStationCoordinates = new GeoCoordinate(originStation.position.lat, originStation.position.lng);
+            var destinationStationCoordinates =
+                new GeoCoordinate(destinationStation.position.lat, destinationStation.position.lng);
+
+            var itinerary1 = await GetItineraryFromCoordinates(originCoordinates, originStationCoordinates, false);
+            var itinerary2 = await GetItineraryFromCoordinates(originStationCoordinates, destinationStationCoordinates);
+            var itinerary3 =
+                await GetItineraryFromCoordinates(destinationStationCoordinates, destinationCoordinates, false);
+
+            itinerary1.Concatenate(itinerary2);
+            itinerary2.Concatenate(itinerary3);
+
+            var directItinerary = await GetItineraryFromCoordinates(originCoordinates, destinationCoordinates, false);
+
+            if (directItinerary < itinerary1)
+                return new List<Itinerary> { directItinerary };
+
+            return new List<Itinerary> { itinerary1, itinerary2, itinerary3 };
+        }
+
+        public async Task<string> GetItineraryStepByStep(string origin, string destination, string uniqueId = null)
+        {
+            var itineraries = await GetItineraries(origin, destination);
+
+            ActiveMQProducer producer;
+
+            if (uniqueId == null)
+            {
+                uniqueId = ParsingUtils.GenerateUniqueID();
+                producer = new ActiveMQProducer(Constants.ActiveMQBrokerUri, uniqueId);
+            }
+            else
+            {
+                producer = _itineraries[uniqueId].Keys.ToList()[0];
+            }
+
+            try
+            {
+                var itinerary = itineraries[0];
+                var segments = itinerary.Segments;
+                var steps = segments[0].Steps;
+
+                var coordinates = new List<List<double[]>>();
+                foreach (var it in itineraries)
+                    coordinates.Add(it.extractCoordinatesFromEachStep());
+
+                var messageCount = Math.Min(MESSAGE_LIMIT, steps.Count);
+                for (var i = 0; i < messageCount; i++)
+                    producer.Send(steps[i].Instruction + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates));
+                Console.WriteLine("Sent message(s)!");
+                ParsingUtils.UpdateItineraries(itineraries, MESSAGE_LIMIT);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                producer.Send("FINISHED");
+            }
+
+            if (!_itineraries.ContainsKey(uniqueId))
+            {
+                _itineraries.Add(uniqueId, new Dictionary<ActiveMQProducer, List<Itinerary>>());
+                _itineraries[uniqueId].Add(producer, itineraries);
+            }
+            else
+            {
+                _itineraries[uniqueId][producer] = itineraries;
+            }
+
+            return uniqueId; // Queue name
+        }
+
+        public async void GetItineraryUpdate(string uniqueId)
+        {
+            if (!_itineraries.TryGetValue(uniqueId, out var itineraryPair) ||
+                itineraryPair.Values.FirstOrDefault()?.Count == 0)
+            {
+                itineraryPair.Keys.FirstOrDefault()?.Send("FINISHED");
+                _itineraries.Remove(uniqueId);
+                return;
+            }
+
+            var currentItineraries = itineraryPair.Values.First();
+            var producer = itineraryPair.Keys.First();
+
+            var newItineraries = new List<Itinerary>();
+            foreach (var itinerary in currentItineraries)
+            {
+                var currentOrigin = itinerary.Segments.First().Steps.First().Coordinates.First();
+                var currentDestination = itinerary.Segments.Last().Steps.Last().Coordinates.Last();
+
+                newItineraries.Add(await GetItineraryFromCoordinates(
+                    new GeoCoordinate(currentOrigin[1], currentOrigin[0]),
+                    new GeoCoordinate(currentDestination[1], currentDestination[0]),
+                    itinerary.IsBicycle));
+            }
+
+            try
+            {
+                var segments = newItineraries.First().Segments;
+                var steps = segments.First().Steps;
+
+                var messageCount = Math.Min(MESSAGE_LIMIT, steps.Count);
+                var coordinates = new List<List<double[]>>();
+                foreach (var it in newItineraries)
+                    coordinates.Add(it.extractCoordinatesFromEachStep());
+
+                for (var i = 0; i < messageCount; i++)
+                    producer.Send(steps[i].Instruction + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates));
+                Console.WriteLine("Sent message(s)!");
+
+                ParsingUtils.UpdateItineraries(newItineraries, MESSAGE_LIMIT);
+            }
+            catch (Exception e)
+            {
+                Console.WriteLine(e);
+                producer.Send("FINISHED");
+            }
+
+            _itineraries[uniqueId] = new Dictionary<ActiveMQProducer, List<Itinerary>> { { producer, newItineraries } };
+        }
+
+        private async Task<Itinerary> GetItineraryFromCoordinates(GeoCoordinate origin, GeoCoordinate destination,
+            bool cycling = true)
+        {
+            var apiKey = Environment.GetEnvironmentVariable(Constants.EnvOrsStringApiKey);
+            fun:
+            var requestUri = BuildRequestUri(apiKey, origin, destination, cycling);
+
+            Console.WriteLine("Service called: " + requestUri);
+
+            var response = await _client.GetAsync(requestUri);
+            if (!response.IsSuccessStatusCode)
+                try
+                {
+                    var errorResponse = await response.Content.ReadAsStringAsync();
+                    var errorMessage = JObject.Parse(errorResponse)["error"]?["message"]?.ToString();
+                    throw new OpenRouteServiceAPIException(
+                        $"Response is not a success for OpenRouteService: {errorMessage}");
+                }
+                catch (InvalidOperationException e)
+                {
+                    String[] apiKeys = Environment.GetEnvironmentVariable(Constants.EnvOrsStringBackupApiKey)?.Split(separator: ',');
+
+                    if(_BACKUP_API_KEY_INDEX >= apiKeys.Length)
+                        _BACKUP_API_KEY_INDEX = 0;
+
+                    apiKey = apiKeys[_BACKUP_API_KEY_INDEX];  // In case I'm being rate limited during my presentation
+                    Console.WriteLine("Used the backup API key n°" + _BACKUP_API_KEY_INDEX);
+                    _BACKUP_API_KEY_INDEX++;
+                    goto fun;
+                }
+
+            var jsonResponse = await response.Content.ReadAsStringAsync();
+            return ParsingUtils.ParseItinerary(JObject.Parse(jsonResponse), cycling);
+        }
+
+        private string BuildRequestUri(string apiKey, GeoCoordinate originCoordinates,
+            GeoCoordinate destinationCoordinates, bool cycling = true)
+        {
+            var origin =
+                $"{originCoordinates.Longitude.ToString(CultureInfo.InvariantCulture)},{originCoordinates.Latitude.ToString(CultureInfo.InvariantCulture)}";
+            var destination =
+                $"{destinationCoordinates.Longitude.ToString(CultureInfo.InvariantCulture)},{destinationCoordinates.Latitude.ToString(CultureInfo.InvariantCulture)}";
+
+            if (cycling)
+                return $"{Constants.OrsBaseAddressCycling}?api_key={apiKey}&start={origin}&end={destination}";
+            return $"{Constants.OrsBaseAddressWalking}?api_key={apiKey}&start={origin}&end={destination}";
+        }
+    }
+}

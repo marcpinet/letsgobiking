@@ -1,0 +1,28 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "RoutingServer", "RoutingServer\RoutingServer.csproj", "{B0485800-C6F2-49FE-82D5-61A0FCB950E1}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CachingServer", "CachingServer\CachingServer.csproj", "{7D749B2A-73A9-49EB-878E-ED88E47844A8}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "ProxyServer", "ProxyServer\ProxyServer.csproj", "{1EB780AB-8D1A-456E-B6B4-18CB5436A56B}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{B0485800-C6F2-49FE-82D5-61A0FCB950E1}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{B0485800-C6F2-49FE-82D5-61A0FCB950E1}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{B0485800-C6F2-49FE-82D5-61A0FCB950E1}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{B0485800-C6F2-49FE-82D5-61A0FCB950E1}.Release|Any CPU.Build.0 = Release|Any CPU
+		{7D749B2A-73A9-49EB-878E-ED88E47844A8}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{7D749B2A-73A9-49EB-878E-ED88E47844A8}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{7D749B2A-73A9-49EB-878E-ED88E47844A8}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{7D749B2A-73A9-49EB-878E-ED88E47844A8}.Release|Any CPU.Build.0 = Release|Any CPU
+		{1EB780AB-8D1A-456E-B6B4-18CB5436A56B}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{1EB780AB-8D1A-456E-B6B4-18CB5436A56B}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{1EB780AB-8D1A-456E-B6B4-18CB5436A56B}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{1EB780AB-8D1A-456E-B6B4-18CB5436A56B}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+EndGlobal
