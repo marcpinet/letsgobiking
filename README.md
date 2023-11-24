@@ -128,7 +128,12 @@ mouratoglou
 
 ## 🎯 TO-DO
 
-- Improve ActiveMQ implementation by allowing real-time itinerary update when user's position is changing
+- Add a loading screen
+- Add waypoints at each key places
+- Allow the user to directly select the origin and destination on the map using waypoints
+- Allow the user to select the minimum bike count inside a station to be counted
+- Allow the user to select how many steps they want from the server between each update
+- Reduce Nominatim calls to speed up the computation and add caching to their response
 
 ## ✍️ Authors
 
