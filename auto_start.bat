@@ -7,6 +7,8 @@ IF %ERRORLEVEL% NEQ 0 (
     exit
 )
 
+cd /d %~dp0
+
 start cmd /k "activemq start"
 
 cd Servers
