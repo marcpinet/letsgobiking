@@ -2,7 +2,7 @@ target/
 !.mvn/wrapper/maven-wrapper.jar
 !**/src/main/**/target/
 !**/src/test/**/target/
-src/main/java/soap/*
+src/main/java/com/soap/*
 
 ### IntelliJ IDEA ###
 .idea/*
