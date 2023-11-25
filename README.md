@@ -88,21 +88,9 @@ Once you did all the steps above, you'll be prompted to choose a starting place 
 
 #### Real Time with live update of the itinerary (with activemq) and steps
 
-https://github.com/marcpinet/letsgobiking/assets/52708150/cd41313b-cd64-4a77-88ab-f765ce49eda7
+https://github.com/marcpinet/letsgobiking/assets/52708150/abd16e35-1f8a-4479-a82b-db3e5c0422a2
 
 #### Some map showcases and search addresses (note that you can type whatever you want, not only plain cities)
-
-```
-Enter an origin:
-campus sophiatech
-
-Enter a destination:
-aubervilliers
-```
-
-https://github.com/marcpinet/letsgobiking/assets/52708150/75312282-bbd8-421e-b082-ad94fb81ea75
-
----
 
 ```
 Enter an origin:
@@ -112,7 +100,7 @@ Enter a destination:
 madrid
 ```
 
-https://github.com/marcpinet/letsgobiking/assets/52708150/b28420a7-046b-4f4a-ab7c-2327490d93c8
+![img1](https://i.imgur.com/FwDwjor.png)
 
 ---
 
@@ -124,7 +112,7 @@ Enter a destination:
 mouratoglou
 ```
 
-![walk_only](https://github.com/marcpinet/letsgobiking/assets/52708150/69886f65-56ab-40b9-9ead-4dfeb78152e4)
+![img2](https://i.imgur.com/8GWbeXh.png)
 
 ## 🎯 TO-DO
 
