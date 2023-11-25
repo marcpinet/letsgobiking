@@ -1,36 +1,34 @@
 package com.polytech.mwsoc.map;
 
 import com.polytech.mwsoc.Main;
-import com.polytech.mwsoc.utils.JsonUtils;
-import com.soap.ws.client.generated.Itinerary;
 import org.jxmapviewer.JXMapViewer;
 import org.jxmapviewer.OSMTileFactoryInfo;
 import org.jxmapviewer.input.PanMouseInputListener;
 import org.jxmapviewer.input.ZoomMouseWheelListenerCursor;
-import org.jxmapviewer.viewer.DefaultTileFactory;
-import org.jxmapviewer.viewer.GeoPosition;
-import org.jxmapviewer.viewer.TileFactoryInfo;
+import org.jxmapviewer.painter.CompoundPainter;
+import org.jxmapviewer.viewer.*;
 
 import javax.swing.*;
 import javax.swing.event.MouseInputListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 public class MapViewer {
 	
 	public static final int frameWidth = 1280;
 	public static final int frameHeight = 720;
+	public static volatile List<ArrayList<double[]>> coordinates = new ArrayList<>();
 	private static JXMapViewer mapViewer;
 	private static JButton updateButton;
-	public static volatile List<ArrayList<double[]>> coordinates = new ArrayList<>();
 	private static TransparentTextPanel textPanel = new TransparentTextPanel();
 	
 	public static void showMap(List<ArrayList<double[]>> coordinates) {
+		
 		MapViewer.coordinates = coordinates;
 		mapViewer = new JXMapViewer();
 		TileFactoryInfo info = new OSMTileFactoryInfo();
@@ -52,7 +50,6 @@ public class MapViewer {
 		}
 		
 		RoutePainter routePainter = new RoutePainter(track, concatenatedIndices);
-		mapViewer.setOverlayPainter(routePainter);
 		
 		int distance = (int) getFarthestDistance(track);
 		int zoom = computeZoom(distance);
@@ -110,6 +107,28 @@ public class MapViewer {
 			}
 		});
 		
+		// Waypoints
+		Set<Waypoint> waypoints = new HashSet<>();
+		
+		if(!coordinates.isEmpty()) {
+			double[] firstCoord = coordinates.get(0).get(0);
+			waypoints.add(new GeoPositionWaypoint(new GeoPosition(firstCoord[0], firstCoord[1])));
+		}
+		
+		for (List<double[]> coordinateList : coordinates) {
+			if (!coordinateList.isEmpty()) {
+				double[] lastCoord = coordinateList.get(coordinateList.size() - 1);
+				waypoints.add(new GeoPositionWaypoint(new GeoPosition(lastCoord[0], lastCoord[1])));
+			}
+		}
+		
+		WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
+		waypointPainter.setWaypoints(waypoints);
+		
+		CompoundPainter<JXMapViewer> compoundPainter = new CompoundPainter<>();
+		compoundPainter.setPainters(routePainter, waypointPainter);
+		mapViewer.setOverlayPainter(compoundPainter);
+		
 		JFrame frame = new JFrame("Itinerary Map");
 		frame.getContentPane().add(mapViewer);
 		textPanel.setPreferredSize(new Dimension(frameWidth / 3, frameHeight));
@@ -138,34 +157,31 @@ public class MapViewer {
 		
 		// Update RoutePainter
 		RoutePainter routePainter = new RoutePainter(updatedTrack, concatenatedIndices);
-		mapViewer.setOverlayPainter(routePainter);
 		
-		// Optionally, if you need to adjust the view to fit the new route, you can use the following code.
-		// Otherwise, keep the current zoom level and center position as is.
-	    /*
-	    int distance = (int) getFarthestDistance(updatedTrack);
-	    int zoom = computeZoom(distance);
-	    mapViewer.setZoom(zoom);
-	
-	    if (!coordinates.isEmpty()) {
-	        GeoPosition newCenter = getApproximateCenter(concatenatedCoordinates);
-	        mapViewer.setAddressLocation(newCenter);
-	    }
-	    */
+		// Update waypoints
+		Set<Waypoint> waypoints = new HashSet<>();
+		if(!coordinates.isEmpty()) {
+			double[] firstCoord = coordinates.get(0).get(0);
+			waypoints.add(new GeoPositionWaypoint(new GeoPosition(firstCoord[0], firstCoord[1])));
+		}
+		
+		for (List<double[]> coordinateList : coordinates) {
+			if (!coordinateList.isEmpty()) {
+				double[] lastCoord = coordinateList.get(coordinateList.size() - 1);
+				waypoints.add(new GeoPositionWaypoint(new GeoPosition(lastCoord[0], lastCoord[1])));
+			}
+		}
+		
+		WaypointPainter<Waypoint> waypointPainter = new WaypointPainter<>();
+		waypointPainter.setWaypoints(waypoints);
+		
+		CompoundPainter<JXMapViewer> compoundPainter = new CompoundPainter<>();
+		compoundPainter.setPainters(routePainter, waypointPainter);
+		mapViewer.setOverlayPainter(compoundPainter);
 	}
 	
 	public static void updateText(String newText) {
 		textPanel.addMessage(newText);
-	}
-	
-	private static GeoPosition getCenter(List<List<Double>> coordinates) {
-		double lat = 0;
-		double lon = 0;
-		for(List<Double> coordinate : coordinates) {
-			lat += coordinate.get(0);
-			lon += coordinate.get(1);
-		}
-		return new GeoPosition(lat / coordinates.size(), lon / coordinates.size());
 	}
 	
 	private static GeoPosition getApproximateCenter(List<List<Double>> coordinates) {
@@ -203,7 +219,7 @@ public class MapViewer {
 		return EARTH_RADIUS * c;
 	}
 	
-	private static int computeZoom(int distance) {
+	private static int computeZoom(int distance) {  // Kill me
 		if(distance < 10)
 			return 7;
 		else if(distance < 20)

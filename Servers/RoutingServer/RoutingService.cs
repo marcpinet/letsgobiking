@@ -5,7 +5,6 @@ using System.Globalization;
 using System.Linq;
 using System.Net.Http;
 using System.ServiceModel;
-using System.Text;
 using System.Threading.Tasks;
 using LetsGoBikingServer.JCDService;
 using Newtonsoft.Json.Linq;
@@ -16,7 +15,8 @@ namespace LetsGoBikingServer
     public class RoutingService : IRoutingService
     {
         private const int MESSAGE_LIMIT = 25;
-        private static int _BACKUP_API_KEY_INDEX = 0;
+        private static int _BACKUP_API_KEY_INDEX;
+
         private static readonly Dictionary<string, Dictionary<ActiveMQProducer, List<Itinerary>>> _itineraries =
             new Dictionary<string, Dictionary<ActiveMQProducer, List<Itinerary>>>();
 
@@ -189,12 +189,13 @@ namespace LetsGoBikingServer
                 }
                 catch (InvalidOperationException e)
                 {
-                    String[] apiKeys = Environment.GetEnvironmentVariable(Constants.EnvOrsStringBackupApiKey)?.Split(separator: ',');
+                    var apiKeys = Environment.GetEnvironmentVariable(Constants.EnvOrsStringBackupApiKey)
+                        ?.Split(separator: ',');
 
-                    if(_BACKUP_API_KEY_INDEX >= apiKeys.Length)
+                    if (_BACKUP_API_KEY_INDEX >= apiKeys.Length)
                         _BACKUP_API_KEY_INDEX = 0;
 
-                    apiKey = apiKeys[_BACKUP_API_KEY_INDEX];  // In case I'm being rate limited during my presentation
+                    apiKey = apiKeys[_BACKUP_API_KEY_INDEX]; // In case I'm being rate limited during my presentation
                     Console.WriteLine("Used the backup API key n°" + _BACKUP_API_KEY_INDEX);
                     _BACKUP_API_KEY_INDEX++;
                     goto fun;

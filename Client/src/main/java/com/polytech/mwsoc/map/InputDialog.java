@@ -18,9 +18,10 @@ public class InputDialog {
 		int result = JOptionPane.showConfirmDialog(null, panel,
 				"Please Enter Origin and Destination", JOptionPane.OK_CANCEL_OPTION);
 		
-		if (result == JOptionPane.OK_OPTION) {
+		if(result == JOptionPane.OK_OPTION) {
 			return new String[]{originField.getText(), destinationField.getText()};
-		} else {
+		}
+		else {
 			return new String[0]; // User canceled, or closed the dialog
 		}
 	}

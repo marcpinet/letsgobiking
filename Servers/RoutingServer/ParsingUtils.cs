@@ -150,15 +150,13 @@ namespace LetsGoBikingServer
             for (var i = firstStartIndex; i < firstCount; i++) lastCoordsFirstItinerary.Add(firstCoordinates[i]);
             for (var i = 0; i < secondEndIndex; i++) firstCoordsSecondItinerary.Add(secondCoordinates[i]);
 
-            foreach (var coord1 in lastCoordsFirstItinerary) {
-                foreach (var coord2 in firstCoordsSecondItinerary) {
-                    if (Math.Abs(coord1[0] - coord2[0]) < tolerance && Math.Abs(coord1[1] - coord2[1]) < tolerance)
-                    {
-                        firstCoordinates.Remove(coord1);
-                        secondCoordinates.Remove(coord2);
-                    }
+            foreach (var coord1 in lastCoordsFirstItinerary)
+            foreach (var coord2 in firstCoordsSecondItinerary)
+                if (Math.Abs(coord1[0] - coord2[0]) < tolerance && Math.Abs(coord1[1] - coord2[1]) < tolerance)
+                {
+                    firstCoordinates.Remove(coord1);
+                    secondCoordinates.Remove(coord2);
                 }
-            }
         }
     }
 }

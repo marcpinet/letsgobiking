@@ -16,8 +16,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 public class Main {
 	
@@ -36,10 +34,11 @@ public class Main {
 			String[] inputData = InputDialog.promptOriginDestination();
 			String origin;
 			String destination;
-			if (inputData.length == 2) {
+			if(inputData.length == 2) {
 				origin = inputData[0];
 				destination = inputData[1];
-			} else {
+			}
+			else {
 				throw new RuntimeException("No origin and destination provided!");
 			}
 			
@@ -162,12 +161,13 @@ public class Main {
 			try {
 				String[] loadingTexts = {"Loading.", "Loading..", "Loading...", "Almost there!", "Just a bit longer!", "Mettez moi 20 svp", "????", "Loading...", "Loading.."};
 				int i = 0;
-				while (loadingFrame.isVisible()) {
+				while(loadingFrame.isVisible()) {
 					loadingLabel.setText(loadingTexts[i % loadingTexts.length]);
 					i++;
 					Thread.sleep(500);
 				}
-			} catch (InterruptedException e) {
+			}
+			catch(InterruptedException e) {
 				e.printStackTrace();
 			}
 		}).start();

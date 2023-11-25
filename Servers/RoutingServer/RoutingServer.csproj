@@ -91,7 +91,7 @@
         <Compile Include="IRoutingService.cs"/>
         <Compile Include="Models.cs"/>
         <Compile Include="NominatimUtils.cs"/>
-        <Compile Include="ParsingUtils.cs" />
+        <Compile Include="ParsingUtils.cs"/>
         <Compile Include="RoutingServiceExceptions.cs"/>
         <Compile Include="Program.cs"/>
         <Compile Include="Properties\AssemblyInfo.cs"/>
