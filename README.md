@@ -128,7 +128,6 @@ mouratoglou
 
 ## 🎯 TO-DO
 
-- Add a loading screen
 - Add waypoints at each key places
 - Allow the user to directly select the origin and destination on the map using waypoints
 - Allow the user to select the minimum bike count inside a station to be counted

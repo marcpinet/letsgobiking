@@ -21,7 +21,7 @@ public class InputDialog {
 		if (result == JOptionPane.OK_OPTION) {
 			return new String[]{originField.getText(), destinationField.getText()};
 		} else {
-			return null; // User canceled, or closed the dialog
+			return new String[0]; // User canceled, or closed the dialog
 		}
 	}
 }

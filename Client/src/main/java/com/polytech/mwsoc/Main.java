@@ -2,6 +2,7 @@ package com.polytech.mwsoc;
 
 import com.polytech.mwsoc.map.InputDialog;
 import com.polytech.mwsoc.map.MapViewer;
+import com.polytech.mwsoc.utils.JsonUtils;
 import com.soap.ws.client.generated.IRoutingService;
 import com.soap.ws.client.generated.RoutingService;
 import org.apache.activemq.ActiveMQConnectionFactory;
@@ -15,7 +16,6 @@ import java.net.MalformedURLException;
 import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Scanner;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -25,11 +25,10 @@ public class Main {
 	private static final String WSDL_URL = "http://localhost:8000/LetsGoBikingServer/RoutingService?wsdl";
 	private static final String SERVICE_NAMESPACE = "http://tempuri.org/";
 	private static final String SERVICE_NAME = "RoutingService";
-	private static Connection connection;
-	private static Session session;
-	private static String QUEUE_NAME;
+	private static String queueName;
 	private static int counter = 0;
 	private static IRoutingService port;
+	private static JFrame loadingFrame;
 	
 	public static void main(String[] args) {
 		try {
@@ -37,12 +36,14 @@ public class Main {
 			String[] inputData = InputDialog.promptOriginDestination();
 			String origin;
 			String destination;
-			if (inputData != null) {
+			if (inputData.length == 2) {
 				origin = inputData[0];
 				destination = inputData[1];
 			} else {
 				throw new RuntimeException("No origin and destination provided!");
 			}
+			
+			showLoadingIndicator();
 			
 			// Setting the SOAP server URL and the service name
 			URL wsdlURL = new URL(WSDL_URL);
@@ -51,10 +52,10 @@ public class Main {
 			port = service.getBasicHttpBindingIRoutingService();
 			
 			// Getting the queue name where the server will send the itineraries
-			QUEUE_NAME = port.getItineraryStepByStep(origin, destination, null);
+			queueName = port.getItineraryStepByStep(origin, destination, null);
 			
 			// Setting up the ActiveMQ consumer
-			setupActiveMQConsumer(QUEUE_NAME);
+			setupActiveMQConsumer(queueName);
 		}
 		catch(SOAPFaultException e) {
 			String faultString = e.getFault().getFaultString();
@@ -73,17 +74,11 @@ public class Main {
 	public static void requestUpdate() {
 		try {
 			System.out.println("Waiting for server response...");
-			port.getItineraryUpdate(QUEUE_NAME);
+			port.getItineraryUpdate(queueName);
 		}
 		catch(Exception e) {
 			e.printStackTrace();
 		}
-	}
-	
-	private static String getUserInput(Scanner scanner, String prompt) {
-		System.out.println(prompt);
-		String r = scanner.nextLine();
-		return new String(r.getBytes(), java.nio.charset.StandardCharsets.UTF_8);
 	}
 	
 	private static void setupActiveMQConsumer(String QUEUE_NAME) throws JMSException {
@@ -91,8 +86,8 @@ public class Main {
 		configureRedeliveryPolicy(connectionFactory);
 		hideDebugLogs();
 		
-		connection = connectionFactory.createConnection();
-		session = createSession(connection);
+		Connection connection = connectionFactory.createConnection();
+		Session session = createSession(connection);
 		
 		MessageConsumer consumer = createConsumer(session, QUEUE_NAME);
 		consumer.setMessageListener(createMessageListener());
@@ -132,8 +127,9 @@ public class Main {
 					System.out.println("Received response from server!");
 					String[] parts = textMessage.getText().split("\\|");
 					MapViewer.updateText(parts[0]);
-					List<ArrayList<double[]>> coordinates = parseCoordinates(parts[1]);
+					List<ArrayList<double[]>> coordinates = JsonUtils.parseCoordinates(parts[1]);
 					if(counter == 0) {
+						hideLoadingIndicator();
 						MapViewer.showMap(coordinates);
 						counter++;
 					}
@@ -152,29 +148,33 @@ public class Main {
 		};
 	}
 	
-	public static List<ArrayList<double[]>> parseCoordinates(String input) {
-		ArrayList<ArrayList<double[]>> coordinates = new ArrayList<>();
-		Pattern pattern = Pattern.compile("\\[(\\[.*?\\])\\]");
-		Matcher matcher = pattern.matcher(input);
+	private static void showLoadingIndicator() {
+		loadingFrame = new JFrame("Loading");
+		JLabel loadingLabel = new JLabel("Loading.", SwingConstants.CENTER);
+		loadingFrame.add(loadingLabel);
+		loadingFrame.setSize(300, 200);
+		loadingFrame.setLocationRelativeTo(null);
+		loadingFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		loadingFrame.setVisible(true);
 		
-		while(matcher.find()) {
-			ArrayList<double[]> itineraryCoordinates = new ArrayList<>();
-			String listString = matcher.group(1);
-			
-			String[] pairs = listString.split("\\],\\[");
-			
-			for(String pair : pairs) {
-				String[] values = pair.replaceAll("\\[|\\]", "").split(",");
-				double[] coordinatePair = new double[2];
-				coordinatePair[1] = Double.parseDouble(values[0]);
-				coordinatePair[0] = Double.parseDouble(values[1]);
-				
-				itineraryCoordinates.add(coordinatePair);
+		// Create a new thread for the animation
+		new Thread(() -> {
+			try {
+				String[] loadingTexts = {"Loading.", "Loading..", "Loading...", "Almost there!", "Just a bit longer!", "Mettez moi 20 svp", "????", "Loading...", "Loading.."};
+				int i = 0;
+				while (loadingFrame.isVisible()) {
+					loadingLabel.setText(loadingTexts[i % loadingTexts.length]);
+					i++;
+					Thread.sleep(500);
+				}
+			} catch (InterruptedException e) {
+				e.printStackTrace();
 			}
-			
-			coordinates.add(itineraryCoordinates);
-		}
-		
-		return coordinates;
+		}).start();
+	}
+	
+	private static void hideLoadingIndicator() {
+		loadingFrame.setVisible(false);
+		loadingFrame.dispose();
 	}
 }

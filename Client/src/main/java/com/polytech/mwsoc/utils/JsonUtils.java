@@ -6,7 +6,10 @@ import com.soap.ws.client.generated.*;
 
 import javax.xml.bind.JAXBElement;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 public class JsonUtils {
 	private static final ObjectMapper mapper = new ObjectMapper();
@@ -90,5 +93,31 @@ public class JsonUtils {
 		result[0] = lastCoordinateList.get(0);
 		result[1] = lastCoordinateList.get(1);
 		return result;
+	}
+	
+	public static List<ArrayList<double[]>> parseCoordinates(String input) {
+		ArrayList<ArrayList<double[]>> coordinates = new ArrayList<>();
+		Pattern pattern = Pattern.compile("\\[(\\[.*?\\])\\]");
+		Matcher matcher = pattern.matcher(input);
+		
+		while(matcher.find()) {
+			ArrayList<double[]> itineraryCoordinates = new ArrayList<>();
+			String listString = matcher.group(1);
+			
+			String[] pairs = listString.split("\\],\\[");
+			
+			for(String pair : pairs) {
+				String[] values = pair.replaceAll("\\[|\\]", "").split(",");
+				double[] coordinatePair = new double[2];
+				coordinatePair[1] = Double.parseDouble(values[0]);
+				coordinatePair[0] = Double.parseDouble(values[1]);
+				
+				itineraryCoordinates.add(coordinatePair);
+			}
+			
+			coordinates.add(itineraryCoordinates);
+		}
+		
+		return coordinates;
 	}
 }
