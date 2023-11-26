@@ -24,9 +24,9 @@ namespace LetsGoBikingServer
         {
             var coordinates = new List<double[]>();
             foreach (var segment in Segments)
-            foreach (var step in segment.Steps)
-            foreach (var coordinate in step.Coordinates)
-                coordinates.Add(coordinate);
+                foreach (var step in segment.Steps)
+                    foreach (var coordinate in step.Coordinates)
+                        coordinates.Add(coordinate);
             return coordinates;
         }
 
@@ -52,12 +52,14 @@ namespace LetsGoBikingServer
 
             var TOLERANCE = 0.000001;
             foreach (var coord1 in lastCoordsFirstItinerary)
-            foreach (var coord2 in firstCoordsSecondItinerary)
-                if (Math.Abs(coord1[0] - coord2[0]) < TOLERANCE && Math.Abs(coord1[1] - coord2[1]) < TOLERANCE)
-                {
-                    firstCoordinates.Remove(coord1);
-                    secondCoordinates.Remove(coord2);
-                }
+            {
+                foreach (var coord2 in firstCoordsSecondItinerary)
+                    if (Math.Abs(coord1[0] - coord2[0]) < TOLERANCE && Math.Abs(coord1[1] - coord2[1]) < TOLERANCE)
+                    {
+                        firstCoordinates.Remove(coord1);
+                        secondCoordinates.Remove(coord2);
+                    }
+            }
         }
 
         public static bool operator >(Itinerary itinerary1, Itinerary itinerary2)
@@ -131,7 +133,29 @@ namespace LetsGoBikingServer
 
         public override string ToString()
         {
-            return $"Step: Distance = {Distance}m, Duration = {Duration}s, Instruction = {Instruction}";
+            string readableDistance = GetReadableDistance();
+            string readableDuration = GetReadableDuration();
+
+            return $"{Instruction} (~{readableDistance}, ~{readableDuration})";
+        }
+
+        private string GetReadableDistance()
+        {
+            if (Distance >= 1000)
+                return $"{Math.Round(Distance / 1000.0)} km";
+
+            return $"{Math.Round(Distance)} m";
+        }
+
+        private string GetReadableDuration()
+        {
+            if (Duration >= 3600)
+                return $"{Math.Round(Duration / 3600.0)} hours";
+
+            if (Duration >= 60)
+                return $"{Math.Round(Duration / 60.0)} minutes";
+
+            return $"{Math.Round(Duration)} seconds";
         }
     }
 }
