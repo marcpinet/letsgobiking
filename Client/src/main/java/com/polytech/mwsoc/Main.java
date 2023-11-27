@@ -29,44 +29,49 @@ public class Main {
 	private static JFrame loadingFrame;
 	
 	public static void main(String[] args) {
-		try {
-			// Setting up the origin and destination for the user
-			String[] inputData = InputDialog.promptOriginDestination();
-			String origin;
-			String destination;
-			if(inputData.length == 2) {
-				origin = inputData[0];
-				destination = inputData[1];
+		boolean success = false;
+		
+		while (!success) {
+			try {
+				// Setting up the origin and destination for the user
+				String[] inputData = InputDialog.promptOriginDestination();
+				String origin;
+				String destination;
+				if (inputData.length == 2) {
+					origin = inputData[0];
+					destination = inputData[1];
+				} else {
+					throw new RuntimeException("No origin and destination provided!");
+				}
+				
+				showLoadingIndicator();
+				
+				// Setting the SOAP server URL and the service name
+				URL wsdlURL = new URL(WSDL_URL);
+				QName serviceName = new QName(SERVICE_NAMESPACE, SERVICE_NAME);
+				RoutingService service = new RoutingService(wsdlURL, serviceName);
+				port = service.getBasicHttpBindingIRoutingService();
+				
+				// Getting the queue name where the server will send the itineraries
+				queueName = port.getItineraryStepByStep(origin, destination, null);
+				
+				// Setting up the ActiveMQ consumer
+				setupActiveMQConsumer(queueName);
+				success = true; // Successful setup, break the loop
+			} catch (SOAPFaultException e) {
+				String faultString = e.getFault().getFaultString();
+				
+				if (e.getFault().hasDetail()) {
+					String detailText = e.getFault().getDetail().getTextContent();
+					JOptionPane.showMessageDialog(null, detailText, "[ERROR]", JOptionPane.ERROR_MESSAGE);
+				} else {
+					JOptionPane.showMessageDialog(null, faultString, "[ERROR]", JOptionPane.ERROR_MESSAGE);
+				}
+				hideLoadingIndicator();
+			} catch (JMSException | MalformedURLException e) {
+				JOptionPane.showMessageDialog(null, e.getMessage(), "[ERROR]", JOptionPane.ERROR_MESSAGE);
+				hideLoadingIndicator();
 			}
-			else {
-				throw new RuntimeException("No origin and destination provided!");
-			}
-			
-			showLoadingIndicator();
-			
-			// Setting the SOAP server URL and the service name
-			URL wsdlURL = new URL(WSDL_URL);
-			QName serviceName = new QName(SERVICE_NAMESPACE, SERVICE_NAME);
-			RoutingService service = new RoutingService(wsdlURL, serviceName);
-			port = service.getBasicHttpBindingIRoutingService();
-			
-			// Getting the queue name where the server will send the itineraries
-			queueName = port.getItineraryStepByStep(origin, destination, null);
-			
-			// Setting up the ActiveMQ consumer
-			setupActiveMQConsumer(queueName);
-		}
-		catch(SOAPFaultException e) {
-			String faultString = e.getFault().getFaultString();
-			System.err.println("SOAP Fault: " + faultString);
-			
-			if(e.getFault().hasDetail()) {
-				String detailText = e.getFault().getDetail().getTextContent();
-				System.err.println("Detail: " + detailText);
-			}
-		}
-		catch(JMSException | MalformedURLException e) {
-			throw new RuntimeException(e);
 		}
 	}
 	
@@ -138,10 +143,10 @@ public class Main {
 					}
 				}
 				catch(JMSException e) {
-					throw new RuntimeException(e);
+					JOptionPane.showMessageDialog(null, e.getMessage(), "[ERROR]", JOptionPane.ERROR_MESSAGE);
 				}
 				catch(Exception e) {
-					e.printStackTrace();
+					JOptionPane.showMessageDialog(null, e.getMessage(), "[ERROR]", JOptionPane.ERROR_MESSAGE);
 				}
 			}
 		};
