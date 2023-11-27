@@ -17,8 +17,9 @@ namespace LetsGoBikingServer
         private const int MESSAGE_LIMIT = 25;
         private static int _BACKUP_API_KEY_INDEX;
 
-        private static readonly Dictionary<string, Dictionary<ActiveMQProducer, List<Itinerary>>> _itineraries =
-            new Dictionary<string, Dictionary<ActiveMQProducer, List<Itinerary>>>();
+        private static readonly Dictionary<string, Dictionary<ActiveMQProducer, KeyValuePair<List<Itinerary>, int>>> _itineraries =
+            new Dictionary<string, Dictionary<ActiveMQProducer, KeyValuePair<List<Itinerary>, int>>>();
+
 
         private static readonly JCDServiceClient jcdServiceClient = new JCDServiceClient();
         private readonly HttpClient _client;
@@ -30,7 +31,7 @@ namespace LetsGoBikingServer
             _nominatimUtils = new NominatimUtils(_client);
         }
 
-        public async Task<List<Itinerary>> GetItineraries(string origin, string destination)
+        public async Task<List<Itinerary>> GetItineraries(string origin, string destination, int minBikes = 1)
         {
             var originCoordinates = await _nominatimUtils.GetGeoCodeAsync(origin);
             var destinationCoordinates = await _nominatimUtils.GetGeoCodeAsync(destination);
@@ -45,9 +46,10 @@ namespace LetsGoBikingServer
             var originCity = await _nominatimUtils.GetCityFromCoordinatesAsync(originCoordinates);
             var destinationCity = await _nominatimUtils.GetCityFromCoordinatesAsync(destinationCoordinates);
             var originStation =
-                await jcdServiceClient.GetClosestStationAsync(originCoordinatesGeoSimplified, originCity);
+                await jcdServiceClient.GetClosestStationAsync(originCoordinatesGeoSimplified, originCity, minBikes);
             var destinationStation =
-                await jcdServiceClient.GetClosestStationAsync(destinationCoordinatesGeoSimplfied, destinationCity);
+                await jcdServiceClient.GetClosestStationAsync(destinationCoordinatesGeoSimplfied, destinationCity,
+                    minBikes);
             var originStationCoordinates = new GeoCoordinate(originStation.position.lat, originStation.position.lng);
             var destinationStationCoordinates =
                 new GeoCoordinate(destinationStation.position.lat, destinationStation.position.lng);
@@ -68,9 +70,9 @@ namespace LetsGoBikingServer
             return new List<Itinerary> { itinerary1, itinerary2, itinerary3 };
         }
 
-        public async Task<string> GetItineraryStepByStep(string origin, string destination, string uniqueId = null)
+        public async Task<string> GetItineraryStepByStep(string origin, string destination, int minBikes, string uniqueId = null)
         {
-            var itineraries = await GetItineraries(origin, destination);
+            var itineraries = await GetItineraries(origin, destination, minBikes);
 
             ActiveMQProducer producer;
 
@@ -108,12 +110,12 @@ namespace LetsGoBikingServer
 
             if (!_itineraries.ContainsKey(uniqueId))
             {
-                _itineraries.Add(uniqueId, new Dictionary<ActiveMQProducer, List<Itinerary>>());
-                _itineraries[uniqueId].Add(producer, itineraries);
+                _itineraries.Add(uniqueId, new Dictionary<ActiveMQProducer, KeyValuePair<List<Itinerary>, int>>());
+                _itineraries[uniqueId].Add(producer, new KeyValuePair<List<Itinerary>, int>(itineraries, minBikes));
             }
             else
             {
-                _itineraries[uniqueId][producer] = itineraries;
+                _itineraries[uniqueId][producer] = new KeyValuePair<List<Itinerary>, int>(itineraries, minBikes);
             }
 
             return uniqueId; // Queue name
@@ -122,7 +124,7 @@ namespace LetsGoBikingServer
         public async void GetItineraryUpdate(string uniqueId)
         {
             if (!_itineraries.TryGetValue(uniqueId, out var itineraryPair) ||
-                itineraryPair.Values.FirstOrDefault()?.Count == 0)
+                itineraryPair.Values.FirstOrDefault().Key.Count == 0)
             {
                 itineraryPair.Keys.FirstOrDefault()?.Send("FINISHED");
                 _itineraries.Remove(uniqueId);
@@ -133,7 +135,7 @@ namespace LetsGoBikingServer
             var producer = itineraryPair.Keys.First();
 
             var newItineraries = new List<Itinerary>();
-            foreach (var itinerary in currentItineraries)
+            foreach (var itinerary in currentItineraries.Key)
             {
                 var currentOrigin = itinerary.Segments.First().Steps.First().Coordinates.First();
                 var currentDestination = itinerary.Segments.Last().Steps.Last().Coordinates.Last();
@@ -166,7 +168,9 @@ namespace LetsGoBikingServer
                 producer.Send("FINISHED");
             }
 
-            _itineraries[uniqueId] = new Dictionary<ActiveMQProducer, List<Itinerary>> { { producer, newItineraries } };
+            _itineraries[uniqueId] = new Dictionary<ActiveMQProducer, KeyValuePair<List<Itinerary>, int>>();
+            _itineraries[uniqueId].Add(producer, new KeyValuePair<List<Itinerary>, int>(newItineraries,
+                currentItineraries.Value));
         }
 
         private async Task<Itinerary> GetItineraryFromCoordinates(GeoCoordinate origin, GeoCoordinate destination,

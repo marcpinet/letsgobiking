@@ -117,9 +117,6 @@ mouratoglou
 ## 🎯 TO-DO
 
 - Allow the user to directly select the origin and destination on the map using waypoints
-- Allow the user to select the minimum bike count inside a station to be counted
-- Allow the user to select how many steps they want from the server between each update
-- Reduce Nominatim calls to speed up the computation and add caching to their response
 
 ## ✍️ Authors
 

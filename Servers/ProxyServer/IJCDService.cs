@@ -7,6 +7,6 @@ namespace ProxyServer
     public interface IJCDService
     {
         [OperationContract]
-        Task<Station> GetClosestStationAsync(SimplifiedGeoCoordinate coordinates, string city);
+        Task<Station> GetClosestStationAsync(SimplifiedGeoCoordinate coordinates, string city, int minBikes);
     }
 }

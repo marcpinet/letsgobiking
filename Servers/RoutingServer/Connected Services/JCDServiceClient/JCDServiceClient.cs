@@ -279,7 +279,7 @@ namespace LetsGoBikingServer.JCDService
     {
         
         [System.ServiceModel.OperationContractAttribute(Action="http://tempuri.org/IJCDService/GetClosestStation", ReplyAction="http://tempuri.org/IJCDService/GetClosestStationResponse")]
-        System.Threading.Tasks.Task<LetsGoBikingServer.JCDService.Station> GetClosestStationAsync(LetsGoBikingServer.JCDService.SimplifiedGeoCoordinate coordinates, string city);
+        System.Threading.Tasks.Task<LetsGoBikingServer.JCDService.Station> GetClosestStationAsync(LetsGoBikingServer.JCDService.SimplifiedGeoCoordinate coordinates, string city, int minBikes);
     }
     
     [System.CodeDom.Compiler.GeneratedCodeAttribute("Microsoft.Tools.ServiceModel.Svcutil", "2.0.3")]
@@ -332,9 +332,9 @@ namespace LetsGoBikingServer.JCDService
         {
         }
         
-        public System.Threading.Tasks.Task<LetsGoBikingServer.JCDService.Station> GetClosestStationAsync(LetsGoBikingServer.JCDService.SimplifiedGeoCoordinate coordinates, string city)
+        public System.Threading.Tasks.Task<LetsGoBikingServer.JCDService.Station> GetClosestStationAsync(LetsGoBikingServer.JCDService.SimplifiedGeoCoordinate coordinates, string city, int minBikes)
         {
-            return base.Channel.GetClosestStationAsync(coordinates, city);
+            return base.Channel.GetClosestStationAsync(coordinates, city, minBikes);
         }
         
         public virtual System.Threading.Tasks.Task OpenAsync()

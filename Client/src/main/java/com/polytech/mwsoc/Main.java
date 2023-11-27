@@ -37,9 +37,11 @@ public class Main {
 				String[] inputData = InputDialog.promptOriginDestination();
 				String origin;
 				String destination;
-				if (inputData.length == 2) {
+				int minBikes;
+				if (inputData.length == 3) {
 					origin = inputData[0];
 					destination = inputData[1];
+					minBikes = Integer.parseInt(inputData[2]);
 				} else {
 					throw new RuntimeException("No origin and destination provided!");
 				}
@@ -53,7 +55,7 @@ public class Main {
 				port = service.getBasicHttpBindingIRoutingService();
 				
 				// Getting the queue name where the server will send the itineraries
-				queueName = port.getItineraryStepByStep(origin, destination, null);
+				queueName = port.getItineraryStepByStep(origin, destination, minBikes, null);
 				
 				// Setting up the ActiveMQ consumer
 				setupActiveMQConsumer(queueName);

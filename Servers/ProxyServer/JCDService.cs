@@ -16,14 +16,14 @@ namespace ProxyServer
         private readonly CachingServer.CachingServer _cachingServer = new CachingServer.CachingServer();
         private readonly HttpClient _client = new HttpClient();
 
-        public async Task<Station> GetClosestStationAsync(SimplifiedGeoCoordinate coordinates, string city)
+        public async Task<Station> GetClosestStationAsync(SimplifiedGeoCoordinate coordinates, string city, int minBikes)
         {
             var geoCoordinates = new GeoCoordinate(coordinates.Latitude, coordinates.Longitude);
 
             city = RemoveDiacritics(city);
-            var stations = await GetAvailableStationsAsync(city);
+            var stations = await GetAvailableStationsAsync(city, minBikes);
 
-            if (stations == null || stations.Count == 0) stations = await ForceGetAvailableStationsAsync();
+            if (stations == null || stations.Count == 0) stations = await ForceGetAvailableStationsAsync(minBikes);
 
 
             var closestStation = stations[0];
@@ -45,19 +45,19 @@ namespace ProxyServer
             return closestStation;
         }
 
-        private async Task<List<Station>> ForceGetAvailableStationsAsync()
+        private async Task<List<Station>> ForceGetAvailableStationsAsync(int minBikes)
         {
             var stations = await GetStationsAsync();
             var availableStations = new List<Station>();
 
             foreach (var station in stations)
-                if (station.status == Station.StatusOpen && station.available_bikes > 0)
+                if (station.status == Station.StatusOpen && station.available_bikes >= minBikes)
                     availableStations.Add(station);
 
             return availableStations;
         }
 
-        private async Task<List<Station>> GetAvailableStationsAsync(string city)
+        private async Task<List<Station>> GetAvailableStationsAsync(string city, int minBikes)
         {
             var stations = await GetStationsAsync(city);
             var availableStations = new List<Station>();
@@ -66,7 +66,7 @@ namespace ProxyServer
                 return null;
 
             foreach (var station in stations)
-                if (station.status == Station.StatusOpen && station.available_bikes > 0)
+                if (station.status == Station.StatusOpen && station.available_bikes >= minBikes)
                     availableStations.Add(station);
             return availableStations;
         }
