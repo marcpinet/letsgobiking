@@ -94,6 +94,8 @@ namespace LetsGoBikingServer
 
         private async Task<JToken> ExecuteRequestAsync(string requestUri)
         {
+            Console.WriteLine("Service called: " + requestUri);
+            
             try
             {
                 var response = await _client.GetAsync(requestUri);

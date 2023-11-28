@@ -33,9 +33,29 @@ namespace LetsGoBikingServer
 
         public async Task<List<Itinerary>> GetItineraries(string origin, string destination, int minBikes = 1)
         {
-            var originCoordinates = await _nominatimUtils.GetGeoCodeAsync(origin);
-            var destinationCoordinates = await _nominatimUtils.GetGeoCodeAsync(destination);
+            // Case where origin and/or destination is/are a geo coordinate like lat,lng
+            bool isOriginCoordinates = origin.Contains(",");
+            bool isDestinationCoordinates = destination.Contains(",");
 
+            GeoCoordinate originCoordinates;
+            GeoCoordinate destinationCoordinates;
+            
+            if (!isOriginCoordinates)
+                originCoordinates = await _nominatimUtils.GetGeoCodeAsync(origin);
+            else
+                originCoordinates = new GeoCoordinate(
+                    double.Parse(origin.Split(',')[0], CultureInfo.InvariantCulture),
+                    double.Parse(origin.Split(',')[1], CultureInfo.InvariantCulture)
+                );
+            
+            if (!isDestinationCoordinates)
+                destinationCoordinates = await _nominatimUtils.GetGeoCodeAsync(destination);
+            else
+                destinationCoordinates = new GeoCoordinate(
+                    double.Parse(destination.Split(',')[0], CultureInfo.InvariantCulture),
+                    double.Parse(destination.Split(',')[1], CultureInfo.InvariantCulture)
+                );
+            
             var originCoordinatesGeoSimplified = new SimplifiedGeoCoordinate();
             originCoordinatesGeoSimplified.latitude = originCoordinates.Latitude;
             originCoordinatesGeoSimplified.longitude = originCoordinates.Longitude;

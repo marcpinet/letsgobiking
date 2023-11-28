@@ -114,10 +114,6 @@ mouratoglou
 
 ![img2](https://i.imgur.com/8GWbeXh.png)
 
-## 🎯 TO-DO
-
-- Allow the user to directly select the origin and destination on the map using waypoints
-
 ## ✍️ Authors
 
 - Marc Pinet - *Initial work* - [marcpinet](https://github.com/marcpinet)
