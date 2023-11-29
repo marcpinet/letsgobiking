@@ -118,7 +118,11 @@ namespace LetsGoBikingServer
 
                 var messageCount = Math.Min(MESSAGE_LIMIT, steps.Count);
                 for (var i = 0; i < messageCount; i++)
-                    producer.Send(steps[i] + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates));
+                    if(i < messageCount - 1)
+                        producer.Send(steps[i] + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates));
+                    else
+                        producer.Send(steps[i] + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates) + "|" + "END");
+
                 Console.WriteLine("Sent message(s)!");
                 ParsingUtils.UpdateItineraries(itineraries, MESSAGE_LIMIT);
             }
@@ -177,7 +181,11 @@ namespace LetsGoBikingServer
                     coordinates.Add(it.extractCoordinatesFromEachStep());
 
                 for (var i = 0; i < messageCount; i++)
-                    producer.Send(steps[i] + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates));
+                    if(i < messageCount - 1)
+                        producer.Send(steps[i] + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates));
+                    else
+                        producer.Send(steps[i] + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates) + "|" + "END");
+                
                 Console.WriteLine("Sent message(s)!");
 
                 ParsingUtils.UpdateItineraries(newItineraries, MESSAGE_LIMIT);

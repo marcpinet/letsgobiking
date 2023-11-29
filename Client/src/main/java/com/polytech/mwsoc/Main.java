@@ -24,11 +24,25 @@ public class Main {
 	private static final String SERVICE_NAMESPACE = "http://tempuri.org/";
 	private static final String SERVICE_NAME = "RoutingService";
 	private static String queueName;
-	private static int counter = 0;
+	private static boolean firstTimeActiveMQ = true;
 	private static IRoutingService port;
 	private static JFrame loadingFrame;
 	
 	public static void main(String[] args) {
+		if(args.length == 1 && args[0].equals("reset")) {
+			try {
+				MapViewer.reset();
+				firstTimeActiveMQ = true;
+				loadingFrame = null;
+				port = null;
+				queueName = null;
+				System.out.println("Client reset!");
+			}
+			catch(Exception e) {
+				e.printStackTrace();
+			}
+		}
+
 		boolean success = false;
 		
 		while (!success) {
@@ -134,18 +148,23 @@ public class Main {
 					String[] parts = textMessage.getText().split("\\|");
 					MapViewer.updateText(parts[0]);
 					List<ArrayList<double[]>> coordinates = JsonUtils.parseCoordinates(parts[1]);
-					if(counter == 0) {
+					
+					//If message contains "|END"
+					if(parts.length == 3 && parts[2].equals("END") && !firstTimeActiveMQ) {
+						SwingUtilities.invokeLater(() -> {
+							MapViewer.coordinates = coordinates;
+							MapViewer.updateMap(coordinates);
+							MapViewer.updateButton.setEnabled(true);
+							MapViewer.updateButton.repaint();
+							
+						});
+					}
+					
+					if(firstTimeActiveMQ) {
 						hideLoadingIndicator();
 						MapViewer.showMap(coordinates);
-						counter++;
+						firstTimeActiveMQ = false;
 					}
-					else {
-						MapViewer.coordinates = coordinates;
-						MapViewer.updateMap(coordinates);
-					}
-				}
-				catch(JMSException e) {
-					JOptionPane.showMessageDialog(null, e.getMessage(), "[ERROR]", JOptionPane.ERROR_MESSAGE);
 				}
 				catch(Exception e) {
 					JOptionPane.showMessageDialog(null, e.getMessage(), "[ERROR]", JOptionPane.ERROR_MESSAGE);
@@ -155,33 +174,37 @@ public class Main {
 	}
 	
 	private static void showLoadingIndicator() {
-		loadingFrame = new JFrame("Loading");
-		JLabel loadingLabel = new JLabel("Loading.", SwingConstants.CENTER);
-		loadingFrame.add(loadingLabel);
-		loadingFrame.setSize(300, 200);
-		loadingFrame.setLocationRelativeTo(null);
-		loadingFrame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
-		loadingFrame.setVisible(true);
-		
-		// Create a new thread for the animation
-		new Thread(() -> {
-			try {
-				String[] loadingTexts = {"Loading.", "Loading..", "Loading...", "Almost there!", "Just a bit longer!", "Mettez moi 20 svp", "????", "Loading...", "Loading.."};
-				int i = 0;
-				while(loadingFrame.isVisible()) {
-					loadingLabel.setText(loadingTexts[i % loadingTexts.length]);
-					i++;
-					Thread.sleep(500);
+		SwingUtilities.invokeLater(() -> {
+			loadingFrame = new JFrame("Loading");
+			JLabel loadingLabel = new JLabel("Loading.", SwingConstants.CENTER);
+			loadingFrame.add(loadingLabel);
+			loadingFrame.setSize(300, 200);
+			loadingFrame.setLocationRelativeTo(null);
+			loadingFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+			loadingFrame.setVisible(true);
+			new Thread(() -> {
+				try {
+					String[] loadingTexts = {"Loading.", "Loading..", "Loading...", "Almost there!", "Just a bit longer!", "Mettez moi 20 svp", "????", "Loading...", "Loading.."};
+					int i = 0;
+					while (loadingFrame.isVisible()) {
+						final int index = i;
+						SwingUtilities.invokeLater(() -> loadingLabel.setText(loadingTexts[index % loadingTexts.length]));
+						i++;
+						Thread.sleep(500);
+					}
+				} catch (InterruptedException e) {
+					e.printStackTrace();
 				}
-			}
-			catch(InterruptedException e) {
-				e.printStackTrace();
-			}
-		}).start();
+			}).start();
+		});
 	}
 	
 	private static void hideLoadingIndicator() {
-		loadingFrame.setVisible(false);
-		loadingFrame.dispose();
+		SwingUtilities.invokeLater(() -> {
+			if (loadingFrame != null) {
+				loadingFrame.setVisible(false);
+				loadingFrame.dispose();
+			}
+		});
 	}
 }

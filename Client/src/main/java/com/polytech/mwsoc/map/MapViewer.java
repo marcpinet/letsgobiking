@@ -13,6 +13,8 @@ import javax.swing.event.MouseInputListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
@@ -24,7 +26,7 @@ public class MapViewer {
 	public static final int frameHeight = 720;
 	public static volatile List<ArrayList<double[]>> coordinates = new ArrayList<>();
 	private static JXMapViewer mapViewer;
-	private static JButton updateButton;
+	public static volatile JButton updateButton;
 	private static TransparentTextPanel textPanel = new TransparentTextPanel();
 	
 	public static void showMap(List<ArrayList<double[]>> coordinates) {
@@ -57,6 +59,7 @@ public class MapViewer {
 		
 		updateButton = new JButton("Refresh");
 		updateButton.addActionListener(e -> {
+			SwingUtilities.invokeLater(() -> updateButton.setEnabled(false));
 			updateMap(MapViewer.coordinates);
 			Main.requestUpdate();
 		});
@@ -134,7 +137,15 @@ public class MapViewer {
 		textPanel.setPreferredSize(new Dimension(frameWidth / 3, frameHeight));
 		frame.add(textPanel, BorderLayout.WEST);
 		frame.setSize(frameWidth, frameHeight);
-		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+		frame.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
+		frame.addWindowListener(new WindowAdapter() {
+			@Override
+			public void windowClosing(WindowEvent e) {
+				frame.setVisible(false);
+				frame.dispose();
+				Main.main(new String[]{"reset"});
+			}
+		});
 		frame.setVisible(true);
 	}
 	
@@ -249,5 +260,20 @@ public class MapViewer {
 		else
 			return 20;
 		
+	}
+	
+	public static void reset() {
+		coordinates = new ArrayList<>();
+		textPanel = new TransparentTextPanel();
+		
+		if(mapViewer != null) {
+			mapViewer.removeAll();
+			mapViewer = null;
+		}
+		
+		if(updateButton != null) {
+			updateButton.removeAll();
+			updateButton = null;
+		}
 	}
 }
