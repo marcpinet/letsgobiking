@@ -22,7 +22,7 @@ public class InputDialog {
 		JButton originMapButton = new JButton("📍");
 		JTextField destinationField = new JTextField(10);
 		JButton destinationMapButton = new JButton("📍");
-
+		
 		SpinnerModel model = new SpinnerNumberModel(1, 1, 99, 1);
 		JSpinner spinner = new JSpinner(model);
 		JXMapViewer mapViewer = new JXMapViewer();
@@ -86,7 +86,7 @@ public class InputDialog {
 	}
 	
 	private static void selectLocation(JXMapViewer mapViewer, JTextField fieldToUpdate) {
-		if (currentMouseListener != null)
+		if(currentMouseListener != null)
 			mapViewer.removeMouseListener(currentMouseListener);
 		
 		JDialog mapDialog = new JDialog(null, "Select Location", Dialog.ModalityType.APPLICATION_MODAL);
@@ -97,7 +97,7 @@ public class InputDialog {
 		currentMouseListener = new MouseAdapter() {
 			@Override
 			public void mouseClicked(MouseEvent e) {
-				if (SwingUtilities.isLeftMouseButton(e)) {
+				if(SwingUtilities.isLeftMouseButton(e)) {
 					GeoPosition position = mapViewer.convertPointToGeoPosition(e.getPoint());
 					fieldToUpdate.setText(position.toString().substring(1, position.toString().length() - 1).replace(" ", ""));
 					mapDialog.dispose();

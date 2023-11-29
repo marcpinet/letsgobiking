@@ -16,7 +16,8 @@ namespace ProxyServer
         private readonly CachingServer.CachingServer _cachingServer = new CachingServer.CachingServer();
         private readonly HttpClient _client = new HttpClient();
 
-        public async Task<Station> GetClosestStationAsync(SimplifiedGeoCoordinate coordinates, string city, int minBikes)
+        public async Task<Station> GetClosestStationAsync(SimplifiedGeoCoordinate coordinates, string city,
+            int minBikes)
         {
             var geoCoordinates = new GeoCoordinate(coordinates.Latitude, coordinates.Longitude);
 

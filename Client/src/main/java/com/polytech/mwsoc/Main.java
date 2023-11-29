@@ -42,21 +42,22 @@ public class Main {
 				e.printStackTrace();
 			}
 		}
-
+		
 		boolean success = false;
 		
-		while (!success) {
+		while(!success) {
 			try {
 				// Setting up the origin and destination for the user
 				String[] inputData = InputDialog.promptOriginDestination();
 				String origin;
 				String destination;
 				int minBikes;
-				if (inputData.length == 3) {
+				if(inputData.length == 3) {
 					origin = inputData[0];
 					destination = inputData[1];
 					minBikes = Integer.parseInt(inputData[2]);
-				} else {
+				}
+				else {
 					throw new RuntimeException("No origin and destination provided!");
 				}
 				
@@ -74,17 +75,20 @@ public class Main {
 				// Setting up the ActiveMQ consumer
 				setupActiveMQConsumer(queueName);
 				success = true; // Successful setup, break the loop
-			} catch (SOAPFaultException e) {
+			}
+			catch(SOAPFaultException e) {
 				String faultString = e.getFault().getFaultString();
 				
-				if (e.getFault().hasDetail()) {
+				if(e.getFault().hasDetail()) {
 					String detailText = e.getFault().getDetail().getTextContent();
 					JOptionPane.showMessageDialog(null, detailText, "[ERROR]", JOptionPane.ERROR_MESSAGE);
-				} else {
+				}
+				else {
 					JOptionPane.showMessageDialog(null, faultString, "[ERROR]", JOptionPane.ERROR_MESSAGE);
 				}
 				hideLoadingIndicator();
-			} catch (JMSException | MalformedURLException e) {
+			}
+			catch(JMSException | MalformedURLException e) {
 				JOptionPane.showMessageDialog(null, e.getMessage(), "[ERROR]", JOptionPane.ERROR_MESSAGE);
 				hideLoadingIndicator();
 			}
@@ -186,13 +190,14 @@ public class Main {
 				try {
 					String[] loadingTexts = {"Loading.", "Loading..", "Loading...", "Almost there!", "Just a bit longer!", "Mettez moi 20 svp", "????", "Loading...", "Loading.."};
 					int i = 0;
-					while (loadingFrame.isVisible()) {
+					while(loadingFrame.isVisible()) {
 						final int index = i;
 						SwingUtilities.invokeLater(() -> loadingLabel.setText(loadingTexts[index % loadingTexts.length]));
 						i++;
 						Thread.sleep(500);
 					}
-				} catch (InterruptedException e) {
+				}
+				catch(InterruptedException e) {
 					e.printStackTrace();
 				}
 			}).start();
@@ -201,7 +206,7 @@ public class Main {
 	
 	private static void hideLoadingIndicator() {
 		SwingUtilities.invokeLater(() -> {
-			if (loadingFrame != null) {
+			if(loadingFrame != null) {
 				loadingFrame.setVisible(false);
 				loadingFrame.dispose();
 			}

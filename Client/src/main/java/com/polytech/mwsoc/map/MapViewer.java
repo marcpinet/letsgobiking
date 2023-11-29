@@ -25,8 +25,8 @@ public class MapViewer {
 	public static final int frameWidth = 1280;
 	public static final int frameHeight = 720;
 	public static volatile List<ArrayList<double[]>> coordinates = new ArrayList<>();
-	private static JXMapViewer mapViewer;
 	public static volatile JButton updateButton;
+	private static JXMapViewer mapViewer;
 	private static TransparentTextPanel textPanel = new TransparentTextPanel();
 	
 	public static void showMap(List<ArrayList<double[]>> coordinates) {
@@ -118,8 +118,8 @@ public class MapViewer {
 			waypoints.add(new GeoPositionWaypoint(new GeoPosition(firstCoord[0], firstCoord[1])));
 		}
 		
-		for (List<double[]> coordinateList : coordinates) {
-			if (!coordinateList.isEmpty()) {
+		for(List<double[]> coordinateList : coordinates) {
+			if(!coordinateList.isEmpty()) {
 				double[] lastCoord = coordinateList.get(coordinateList.size() - 1);
 				waypoints.add(new GeoPositionWaypoint(new GeoPosition(lastCoord[0], lastCoord[1])));
 			}
@@ -176,8 +176,8 @@ public class MapViewer {
 			waypoints.add(new GeoPositionWaypoint(new GeoPosition(firstCoord[0], firstCoord[1])));
 		}
 		
-		for (List<double[]> coordinateList : coordinates) {
-			if (!coordinateList.isEmpty()) {
+		for(List<double[]> coordinateList : coordinates) {
+			if(!coordinateList.isEmpty()) {
 				double[] lastCoord = coordinateList.get(coordinateList.size() - 1);
 				waypoints.add(new GeoPositionWaypoint(new GeoPosition(lastCoord[0], lastCoord[1])));
 			}

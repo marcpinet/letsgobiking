@@ -17,8 +17,9 @@ namespace LetsGoBikingServer
         private const int MESSAGE_LIMIT = 25;
         private static int _BACKUP_API_KEY_INDEX;
 
-        private static readonly Dictionary<string, Dictionary<ActiveMQProducer, KeyValuePair<List<Itinerary>, int>>> _itineraries =
-            new Dictionary<string, Dictionary<ActiveMQProducer, KeyValuePair<List<Itinerary>, int>>>();
+        private static readonly Dictionary<string, Dictionary<ActiveMQProducer, KeyValuePair<List<Itinerary>, int>>>
+            _itineraries =
+                new Dictionary<string, Dictionary<ActiveMQProducer, KeyValuePair<List<Itinerary>, int>>>();
 
 
         private static readonly JCDServiceClient jcdServiceClient = new JCDServiceClient();
@@ -34,12 +35,12 @@ namespace LetsGoBikingServer
         public async Task<List<Itinerary>> GetItineraries(string origin, string destination, int minBikes = 1)
         {
             // Case where origin and/or destination is/are a geo coordinate like lat,lng and doesn't contain alphabet characters
-            bool isOriginCoordinates = origin.Contains(",") && !origin.Any(char.IsLetter);
-            bool isDestinationCoordinates = destination.Contains(",") && !destination.Any(char.IsLetter);
+            var isOriginCoordinates = origin.Contains(",") && !origin.Any(char.IsLetter);
+            var isDestinationCoordinates = destination.Contains(",") && !destination.Any(char.IsLetter);
 
             GeoCoordinate originCoordinates;
             GeoCoordinate destinationCoordinates;
-            
+
             if (!isOriginCoordinates)
                 originCoordinates = await _nominatimUtils.GetGeoCodeAsync(origin);
             else
@@ -47,7 +48,7 @@ namespace LetsGoBikingServer
                     double.Parse(origin.Split(',')[0], CultureInfo.InvariantCulture),
                     double.Parse(origin.Split(',')[1], CultureInfo.InvariantCulture)
                 );
-            
+
             if (!isDestinationCoordinates)
                 destinationCoordinates = await _nominatimUtils.GetGeoCodeAsync(destination);
             else
@@ -55,7 +56,7 @@ namespace LetsGoBikingServer
                     double.Parse(destination.Split(',')[0], CultureInfo.InvariantCulture),
                     double.Parse(destination.Split(',')[1], CultureInfo.InvariantCulture)
                 );
-            
+
             var originCoordinatesGeoSimplified = new SimplifiedGeoCoordinate();
             originCoordinatesGeoSimplified.latitude = originCoordinates.Latitude;
             originCoordinatesGeoSimplified.longitude = originCoordinates.Longitude;
@@ -90,7 +91,8 @@ namespace LetsGoBikingServer
             return new List<Itinerary> { itinerary1, itinerary2, itinerary3 };
         }
 
-        public async Task<string> GetItineraryStepByStep(string origin, string destination, int minBikes, string uniqueId = null)
+        public async Task<string> GetItineraryStepByStep(string origin, string destination, int minBikes,
+            string uniqueId = null)
         {
             var itineraries = await GetItineraries(origin, destination, minBikes);
 
@@ -118,10 +120,11 @@ namespace LetsGoBikingServer
 
                 var messageCount = Math.Min(MESSAGE_LIMIT, steps.Count);
                 for (var i = 0; i < messageCount; i++)
-                    if(i < messageCount - 1)
+                    if (i < messageCount - 1)
                         producer.Send(steps[i] + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates));
                     else
-                        producer.Send(steps[i] + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates) + "|" + "END");
+                        producer.Send(steps[i] + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates) + "|" +
+                                      "END");
 
                 Console.WriteLine("Sent message(s)!");
                 ParsingUtils.UpdateItineraries(itineraries, MESSAGE_LIMIT);
@@ -181,11 +184,12 @@ namespace LetsGoBikingServer
                     coordinates.Add(it.extractCoordinatesFromEachStep());
 
                 for (var i = 0; i < messageCount; i++)
-                    if(i < messageCount - 1)
+                    if (i < messageCount - 1)
                         producer.Send(steps[i] + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates));
                     else
-                        producer.Send(steps[i] + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates) + "|" + "END");
-                
+                        producer.Send(steps[i] + "|" + ParsingUtils.ConvertCoordinatesListToText(coordinates) + "|" +
+                                      "END");
+
                 Console.WriteLine("Sent message(s)!");
 
                 ParsingUtils.UpdateItineraries(newItineraries, MESSAGE_LIMIT);
