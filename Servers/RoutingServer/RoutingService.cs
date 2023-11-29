@@ -33,9 +33,9 @@ namespace LetsGoBikingServer
 
         public async Task<List<Itinerary>> GetItineraries(string origin, string destination, int minBikes = 1)
         {
-            // Case where origin and/or destination is/are a geo coordinate like lat,lng
-            bool isOriginCoordinates = origin.Contains(",");
-            bool isDestinationCoordinates = destination.Contains(",");
+            // Case where origin and/or destination is/are a geo coordinate like lat,lng and doesn't contain alphabet characters
+            bool isOriginCoordinates = origin.Contains(",") && !origin.Any(char.IsLetter);
+            bool isDestinationCoordinates = destination.Contains(",") && !destination.Any(char.IsLetter);
 
             GeoCoordinate originCoordinates;
             GeoCoordinate destinationCoordinates;
