@@ -144,8 +144,9 @@ public class Main {
 				TextMessage textMessage = (TextMessage) message;
 				try {
 					if(textMessage.getText().equals("FINISHED")) {
-						JOptionPane.showMessageDialog(null, "Itinerary is completed!", "[INFO]", JOptionPane.INFORMATION_MESSAGE);
-						System.exit(0);
+						JOptionPane.showMessageDialog(null, "Itinerary is completed! You can either continue visualizing the itinerary or close the window.", "[INFO]", JOptionPane.INFORMATION_MESSAGE);
+						MapViewer.updateMap(MapViewer.firstItineraryReceivedCoordinates);
+						return;
 					}
 					
 					System.out.println("Received response from server!");
@@ -178,38 +179,34 @@ public class Main {
 	}
 	
 	private static void showLoadingIndicator() {
-		SwingUtilities.invokeLater(() -> {
-			loadingFrame = new JFrame("Loading");
-			JLabel loadingLabel = new JLabel("Loading.", SwingConstants.CENTER);
-			loadingFrame.add(loadingLabel);
-			loadingFrame.setSize(300, 200);
-			loadingFrame.setLocationRelativeTo(null);
-			loadingFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
-			loadingFrame.setVisible(true);
-			new Thread(() -> {
-				try {
-					String[] loadingTexts = {"Loading.", "Loading..", "Loading...", "Almost there!", "Just a bit longer!", "Mettez moi 20 svp", "????", "Loading...", "Loading.."};
-					int i = 0;
-					while(loadingFrame.isVisible()) {
-						final int index = i;
-						SwingUtilities.invokeLater(() -> loadingLabel.setText(loadingTexts[index % loadingTexts.length]));
-						i++;
-						Thread.sleep(500);
-					}
+		loadingFrame = new JFrame("Loading");
+		JLabel loadingLabel = new JLabel("Loading.", SwingConstants.CENTER);
+		loadingFrame.add(loadingLabel);
+		loadingFrame.setSize(300, 200);
+		loadingFrame.setLocationRelativeTo(null);
+		loadingFrame.setDefaultCloseOperation(WindowConstants.EXIT_ON_CLOSE);
+		loadingFrame.setVisible(true);
+		new Thread(() -> {
+			try {
+				String[] loadingTexts = {"Loading.", "Loading..", "Loading...", "Almost there!", "Just a bit longer!", "Mettez moi 20 svp", "????", "Loading...", "Loading.."};
+				int i = 0;
+				while(loadingFrame.isVisible()) {
+					final int index = i;
+					SwingUtilities.invokeLater(() -> loadingLabel.setText(loadingTexts[index % loadingTexts.length]));
+					i++;
+					Thread.sleep(500);
 				}
-				catch(InterruptedException e) {
-					e.printStackTrace();
-				}
-			}).start();
-		});
+			}
+			catch(InterruptedException e) {
+				e.printStackTrace();
+			}
+		}).start();
 	}
 	
 	private static void hideLoadingIndicator() {
-		SwingUtilities.invokeLater(() -> {
-			if(loadingFrame != null) {
-				loadingFrame.setVisible(false);
-				loadingFrame.dispose();
-			}
-		});
+		if(loadingFrame != null) {
+			loadingFrame.setVisible(false);
+			loadingFrame.dispose();
+		}
 	}
 }

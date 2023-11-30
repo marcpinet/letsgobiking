@@ -24,12 +24,29 @@ public class MapViewer {
 	
 	public static final int frameWidth = 1280;
 	public static final int frameHeight = 720;
+	public static volatile List<ArrayList<double[]>> firstItineraryReceivedCoordinates = new ArrayList<>();
+	public static boolean firstItineraryReceived = true;
 	public static volatile List<ArrayList<double[]>> coordinates = new ArrayList<>();
 	public static volatile JButton updateButton;
 	private static JXMapViewer mapViewer;
 	private static TransparentTextPanel textPanel = new TransparentTextPanel();
 	
 	public static void showMap(List<ArrayList<double[]>> coordinates) {
+		if(firstItineraryReceived) {
+			// Deep copy of the coordinates list inside the firstItineraryReceivedCoordinates list
+			for(ArrayList<double[]> it : coordinates) {
+				ArrayList<double[]> temp = new ArrayList<>();
+				for(double[] coord : it) {
+					double[] tempCoord = new double[2];
+					tempCoord[0] = coord[0];
+					tempCoord[1] = coord[1];
+					temp.add(tempCoord);
+				}
+				firstItineraryReceivedCoordinates.add(temp);
+			}
+			firstItineraryReceived = false;
+		}
+		
 		
 		MapViewer.coordinates = coordinates;
 		mapViewer = new JXMapViewer();
@@ -275,5 +292,8 @@ public class MapViewer {
 			updateButton.removeAll();
 			updateButton = null;
 		}
+		
+		firstItineraryReceivedCoordinates = new ArrayList<>();
+		firstItineraryReceived = true;
 	}
 }
