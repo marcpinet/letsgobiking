@@ -114,6 +114,10 @@ mouratoglou
 
 ![img2](https://i.imgur.com/8GWbeXh.png)
 
+## 🐛 Known issues
+
+- The loading indicator doesn't show its label on second invoke (e.g after asking for a second itinerary).
+
 ## ✍️ Authors
 
 - Marc Pinet - *Initial work* - [marcpinet](https://github.com/marcpinet)
