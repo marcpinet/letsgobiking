@@ -117,15 +117,6 @@ public class MapViewer {
 		mapViewer.addMouseListener(delegator);
 		mapViewer.addMouseMotionListener(delegator);
 		mapViewer.addMouseWheelListener(delegator);
-		mapViewer.addMouseListener(new MouseAdapter() {
-			@Override
-			public void mouseClicked(MouseEvent evt) {
-				boolean right = SwingUtilities.isRightMouseButton(evt);
-				if(right) {
-					toggle.toggle();
-				}
-			}
-		});
 		
 		// Waypoints
 		Set<Waypoint> waypoints = new HashSet<>();
