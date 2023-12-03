@@ -88,7 +88,7 @@ Once you did all the steps above, you'll be prompted to choose a starting place 
 
 #### Real Time with live update of the itinerary (with activemq) and steps
 
-https://github.com/marcpinet/letsgobiking/assets/52708150/141904e0-2db1-4b4d-a21f-27901e1490b2
+https://github.com/user-attachments/assets/499d0261-4c13-4cdc-85c1-d8c0d9c8f57c
 
 #### Some map showcases and search addresses (note that you can type whatever you want, not only plain cities)
 
